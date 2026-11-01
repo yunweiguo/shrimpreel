@@ -15,43 +15,46 @@ export const LOCALE_META: Record<Locale, { tag: string; ogLocale: string; name: 
 }
 
 export const site = {
-  keyword: 'Neon Shuffle',
-  brandName: 'Neon Shuffle AI',
-  logoMark: 'NS',
-  domain: 'example.com',
-  supportEmail: 'support@example.com',
+  keyword: 'Hop Hop Hop',
+  brandName: 'Hop Hop Hop AI',
+  logoMark: 'HH',
+  domain: 'hop-hop-hop.example.com', // TODO(site): 替换为正式域名
+  supportEmail: 'support@hop-hop-hop.example.com', // TODO(site): 配置真实客服邮箱
   // 社媒平台名称（用于 “Viral on TikTok” 之类标签）
   trendPlatform: 'TikTok',
   ogImage: '/og.png',
   // 页面主题，可选值和效果见 src/lib/theme.ts
-  theme: 'classic' as ThemeName,
+  theme: 'acid' as ThemeName,
 
   // 生成模板的共用参数：provider 输出时长 = 源视频时长，所以每种风格的每个时长档位各有一段剪好的源视频（见 styles[].sources）。
   template: {
     aspectRatio: '9:16',
-    fullSeconds: 18,
+    fullSeconds: 8,
   },
 
   // 舞蹈风格：一个站点可以配多种，第一个是默认风格；只有一种时界面不显示风格选择。
   // 源视频上传到 R2 的 templates/<文件名>，由 /media/templates/<文件名> 公开提供给 provider 拉取。
   // 风格的展示名和一句话介绍写在 src/content/<locale>.ts 的 styles[id]（缺了 typecheck 报错）。
+  // TODO(site): 用实测通过的双人跳跃、下蹲、换位参考片替换 seed/templates 占位片
+  duoEnabled: true,
   styles: [
     {
       // 写入 generations.template_id，发布后不要改
-      id: 'neon-shuffle-v1',
+      id: 'hop-hop-hop-v1',
       // 键 = durations[].id，每个档位都要有
-      sources: { short: 'neon-shuffle-v1-6s.mp4', medium: 'neon-shuffle-v1-12s.mp4', full: 'neon-shuffle-v1-18s.mp4' },
+      sources: { short: 'hop-hop-hop-v1-4s.mp4', medium: 'hop-hop-hop-v1-6s.mp4', full: 'hop-hop-hop-v1-8s.mp4' },
       // 这种风格的 prompt，覆盖 video.yir.prompt 和 video.nanoapi.prompt；null = 用默认
       prompt: null as string | null,
       // yir 两步走（可选）：先用图片模型把照片里的人合成进源视频首帧，再拿合成图做动作参考，成片保留源视频的场景。
       // null = 单步，直接用用户照片做参考，背景会变成照片的背景。图片模型等共用参数在 video.yir.sceneImage
       scene: null as StyleScene | null,
       // 首页展示素材（public/demo/）。换成真实素材时必须拥有授权，credit 写原作者，例如 '@handle · TikTok'。
+      // TODO(site): 用真实生成的展示样片替换占位素材，更新 credit
       examples: {
-        original: { video: '/demo/original.mp4', poster: '/demo/original.jpg', credit: 'Demo clip · original' },
+        original: { video: '/demo/original.mp4', poster: '/demo/original.jpg', credit: 'Illustrated placeholder · not a real result' },
         aiVersions: [
-          { video: '/demo/ai1.mp4', poster: '/demo/ai1.jpg', credit: 'Demo clip · AI render' },
-          { video: '/demo/ai2.mp4', poster: '/demo/ai2.jpg', credit: 'Demo clip · AI render' },
+          { video: '/demo/ai1.mp4', poster: '/demo/ai1.jpg', credit: 'Illustrated placeholder · not a real result' },
+          { video: '/demo/ai2.mp4', poster: '/demo/ai2.jpg', credit: 'Illustrated placeholder · not a real result' },
         ],
         madeWith: { photo: '/demo/sample-photo.jpg', video: '/demo/madeWith.mp4', poster: '/demo/madeWith.jpg' },
       },
@@ -70,6 +73,11 @@ export const site = {
 
   // 视频模型，服务商由 VIDEO_PROVIDER 选择。换模型时同时检查 src/server/video/ 下对应文件的入参与出参。
   video: {
+    kie: {
+      model: 'bytedance/seedance-2-fast',
+      prompt: 'Follow video 1 as the choreography and framing reference. Fixed vertical camera, two people in forced perspective. A starts close to the lens and points back at B. B hops three times. A lowers a flat palm while B crouches, as if squished. At the midpoint of the full 8-second routine, a hard cut swaps their positions; B now points and squishes while A hops and crouches. For shorter clips follow only the corresponding opening segment of the reference. Keep identities and outfits consistent across the cut. Keep feet grounded, hands coherent and the background stable. No extra people, fused bodies, face blending, camera motion, subtitles or logos. Silent output.',
+      costCentsPerSecond: 0, // TODO(site): 根据 KIE 当前参考视频费率填入每秒美分成本；0 不是实际免费
+    },
     // fal.ai queue API（默认）
     falModel: 'fal-ai/wan/v2.2-14b/animate/replace',
     resolution: '480p',
@@ -110,9 +118,9 @@ export const site = {
   },
 
   durations: [
-    { id: 'short', seconds: 6, credits: 6 },
-    { id: 'medium', seconds: 12, credits: 12 },
-    { id: 'full', seconds: 18, credits: 18, isFull: true },
+    { id: 'short', seconds: 4, credits: 4 },
+    { id: 'medium', seconds: 6, credits: 6 },
+    { id: 'full', seconds: 8, credits: 8, isFull: true },
   ],
 
   // 积分包：一次性购买，买的积分永不过期（赠送积分可以设有效期，扣费时先扣快到期的）。价格用于展示与订单记录，实际收费以支付商后台为准。
@@ -174,16 +182,16 @@ export const site = {
   // cover 可选：public/ 下 1200×630 的图片路径，用在列表卡片、文章顶部、og:image 和 Article 的 image；
   // 用 scripts/article-cover.mjs 从站点自己的视频截帧生成（带标题、标签，可选多种版式）。不填时卡片没有图，og:image 用站点默认图
   articles: [
-    { key: 'trend', slug: 'neon-shuffle-ai-trend', publishedAt: '2026-10-20', updatedAt: '2026-10-20', cover: '/guides/neon-shuffle-ai-trend.jpg' },
-    { key: 'howTo', slug: 'how-to-make-neon-shuffle-ai-video', publishedAt: '2026-10-20', updatedAt: '2026-10-20' },
+    { key: 'trend', slug: 'hop-hop-hop-ai-trend', publishedAt: '2026-11-01', updatedAt: '2026-11-01' },
+    { key: 'howTo', slug: 'how-to-make-hop-hop-hop-ai-video', publishedAt: '2026-11-01', updatedAt: '2026-11-01' },
   ],
 
   seo: {
     // 长尾词：不输出 meta keywords（Google 不用），由 npm run seo:check 检查首页正文是否覆盖
-    secondaryKeywords: ['Neon Shuffle AI', 'Neon Shuffle video', 'Neon Shuffle trend', 'AI dance video'],
+    secondaryKeywords: ['Hop Hop Hop AI', 'Hop Hop Hop video', 'Hop Hop Hop trend', 'hop hop hop ai video generator', 'hop hop hop dance', 'hop hop hop AI dance', 'gabi trend'],
     // 首次上线日期与站点页面（首页、价格、法律页等）最近一次内容更新日期：首页视频 uploadDate、sitemap lastmod。文章用各自的日期
-    publishedAt: '2026-10-20',
-    updatedAt: '2026-10-20',
+    publishedAt: '2026-11-01',
+    updatedAt: '2026-11-01',
     // Search Console / Bing Webmaster 选“HTML 标记”验证时填 content 值；用 DNS 验证则留空
     googleVerification: '',
     bingVerification: '',

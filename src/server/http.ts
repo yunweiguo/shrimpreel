@@ -60,6 +60,7 @@ export function publicGeneration(g: GenerationRow) {
     creditsCost: g.credits_cost,
     status: g.status,
     errorCode: g.error_code,
+    pendingConfirmation: g.status === 'processing' && g.provider === 'kie' && !!g.provider_request_id?.startsWith('kie-unconfirmed:'),
     refunded: g.refunded === 1,
     createdAt: g.created_at,
     completedAt: g.completed_at,

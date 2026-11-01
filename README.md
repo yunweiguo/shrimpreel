@@ -1,4 +1,12 @@
-# ShrimpReel
+# Hop Hop Hop AI
+
+An independent Hop Hop Hop photo-to-video site, built on [ShrimpReel](https://github.com/qianshuixia/shrimpreel).
+
+This branch adds two-photo duo and one-photo twin modes, an optional KIE Seedance 2 Fast reference-video adapter, English/Chinese copy, and 4/6/8-second cuts (8 seconds is the full routine). Existing authentication, payments, credits, queue, history and failure refunds are retained.
+
+**Development status:** the media is explicitly labeled placeholder material. Real generation quality and live payments have not been tested for this site. The domain, authorized reference clips, verified examples, provider cost and Cloudflare credentials remain setup items; `doctor` blocks a production launch with unresolved `TODO(site)` markers. See [KIE setup](docs/env.md#hop-hop-hop-的-kie-配置).
+
+## Upstream documentation
 
 English | [简体中文](README.zh-CN.md)
 

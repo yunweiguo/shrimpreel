@@ -73,6 +73,7 @@ export type Generation = {
   creditsCost: number
   status: 'queued' | 'processing' | 'succeeded' | 'failed'
   errorCode: string | null
+  pendingConfirmation?: boolean
   refunded: boolean
   createdAt: string
   completedAt: string | null

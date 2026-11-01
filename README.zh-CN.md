@@ -1,4 +1,12 @@
-# ShrimpReel（虾片）
+# Hop Hop Hop AI
+
+基于 [ShrimpReel](https://github.com/qianshuixia/shrimpreel) 二次开发的独立照片生成视频站。
+
+新增双人两张照片、单人分饰两角、KIE Seedance 2 Fast 动作参考适配器，以及围绕 Hop Hop Hop 重写的中英文案。提供 4/6/8 秒，8 秒为完整的双人换位，短档为开头片段。复用原有登录、支付、积分、队列、历史记录和失败退款。
+
+**当前为开发版本：** 展示素材明确标为占位示意，尚未验证本网站的真实生成效果及真实付款。正式域名、授权参考片、实测样片、供应商成本与 Cloudflare 配置仍需补齐；存在 `TODO(site)` 时 doctor 会阻止正式发布。见 [KIE 配置](docs/env.md#hop-hop-hop-的-kie-配置)。
+
+## 上游模板说明
 
 [English](README.md) | 简体中文
 

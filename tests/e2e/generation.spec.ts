@@ -155,7 +155,8 @@ test.describe('多风格站点', () => {
     await expect(page.getByTestId(`hero-tab-${STYLES[0]!.id}`)).toHaveAttribute('aria-selected', 'true')
 
     await page.getByTestId(`style-${second.id}`).click()
-    await page.getByTestId('photo-input').setInputFiles(PHOTO)
+    if (site.duoEnabled) await page.getByTestId('mode-twins').click()
+  await page.getByTestId('photo-input').setInputFiles(PHOTO)
     await page.getByTestId('duration-short').click()
     await page.getByTestId('consent').check()
     await expect(page.getByTestId('generate')).toBeEnabled()

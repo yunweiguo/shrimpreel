@@ -23,14 +23,14 @@ export function en(s: S) {
   const { ga4Id, cfBeaconToken, umamiWebsiteId } = s.analytics
   // 每种风格的展示名和一句话介绍；site.styles 加风格时这里补一项（缺了 typecheck 报错），zh.ts 同
   const styles: Record<StyleId, StyleCopy> = {
-    'neon-shuffle-v1': { name: k, tagline: 'The original routine, beat for beat.' },
+    'hop-hop-hop-v1': { name: k, tagline: 'Point. Hop. Squish. Swap.' },
   }
   return {
     styles,
     meta: {
       // 首页 title 不加品牌后缀：品牌通常已含关键词，控制在 60 字符内（seo:check 会校验）
-      homeTitle: `${k} AI Video Generator from One Photo`,
-      homeDescription: `Upload one photo and get your own ${k} video in minutes. Same choreography, same framing, starring you. ${subs ? 'Buy credits once or subscribe monthly.' : 'Pay per video with credits that never expire.'}`,
+      homeTitle: `${k} AI Video Generator — Duo & Twins`,
+      homeDescription: `Make a ${k} AI dance video from your photos. Try a duo with a friend or play both parts as twins. Hop, squish and swap in a vertical MP4.`,
       pricingTitle: `Pricing – ${b}`,
       pricingDescription: subs
         ? `Credit packs and monthly or yearly plans for ${k} AI videos. Pack credits never expire, cancel a plan anytime, failed renders are refunded automatically.`
@@ -44,7 +44,7 @@ export function en(s: S) {
       refundDescription: `When ${b} returns credits or refunds a credit pack, and how long refunds take to arrive.`,
       reportTitle: `Report content – ${b}`,
       reportDescription: `Report a ${b} video that shows you without consent, involves a minor or infringes your rights. We review every report within ${s.takedownSlaHours} hours.`,
-      ogImageAlt: `${b}: turn one photo into your own ${k} video`,
+      ogImageAlt: `${b}: turn your photos into your own ${k} video`,
       breadcrumbHome: 'Home',
     },
     alt: {
@@ -67,18 +67,23 @@ export function en(s: S) {
     },
     hero: {
       title: `${k} AI Video Generator`,
-      subtitle: `Turn a single selfie into your own take on the ${k} clip. We keep the choreography, timing and framing of the original and cast you as the lead.`,
-      badge: `Trending on ${s.trendPlatform}`,
-      original: 'Original',
-      aiVersion: 'AI version',
-      chips: ['Same choreography', 'Same framing', 'You as the lead'],
-      creditNote: 'Sample clips are placeholders made for this demo.',
+      subtitle: 'You. Your bestie. Three hops. Turn your photos into the duo dance with the squish-and-swap twist — or play both parts as your own twin.',
+      badge: 'The squish-and-swap dance',
+      original: 'Motion concept',
+      aiVersion: 'Example concept',
+      chips: ['Two friends or twins', '8-second full routine', 'Vertical MP4'],
+      creditNote: 'Illustrated placeholders show the layout only. Real generation quality has not been verified yet.',
     },
     generator: {
       // 只给读屏用（sr-only），不放关键词，避免隐藏文字堆词
       title: 'Create your video',
-      stepPhoto: 'Your photo',
-      dropTitle: 'Drop a photo or click to upload',
+      stepPhoto: 'Your photos',
+      modeLabel: 'Choose who is in the video',
+      modes: { duo: 'You + a friend', twins: 'Your own twin' },
+      modeHints: { duo: 'Two photos, two identities', twins: 'One photo, both roles' },
+      personA: 'Person A · points first',
+      personB: 'Person B · hops first',
+      dropTitle: 'Choose photo',
       dropHint: 'JPG, PNG or WebP · up to 10 MB',
       guidance: 'Best results: one person, facing the camera, even lighting, head and shoulders visible. Avoid sunglasses, masks and heavy filters.',
       change: 'Change photo',
@@ -89,7 +94,7 @@ export function en(s: S) {
       seconds: (n: number) => `${n} s`,
       full: 'full',
       creditsLabel: (n: number) => `${n} credits`,
-      consent: 'This photo is of me, or I have permission from the person in it. They are 18 or older and not a celebrity or public figure.',
+      consent: 'I have permission from everyone in these photos to make this AI video. Everyone is 18 or older and not a public figure.',
       ctaSignUp: 'Sign up free and start',
       ctaGenerate: (n: number) => `Generate video · ${n} credits`,
       ctaBuy: 'Get credits to generate',
@@ -100,7 +105,8 @@ export function en(s: S) {
       needPhoto: 'Add a photo first.',
       needConsent: 'Please confirm the consent box.',
       queued: 'In the queue…',
-      processing: 'Rendering your video. This usually takes a few minutes; you can leave this page.',
+      pendingConfirmation: 'The provider has not confirmed this request. Do not submit it again. An unresolved task will time out and return its credits.',
+      processing: 'Your video is being processed. You can leave this page and check My videos later.',
       succeeded: 'Your video is ready',
       failed: 'This render failed.',
       refunded: 'The credits have been returned to your balance.',
@@ -111,80 +117,56 @@ export function en(s: S) {
       expiresOn: (date: string) => `Download it before ${date}. Videos are deleted automatically after that.`,
     },
     madeWith: {
-      eyebrow: `Made with ${b}`,
-      title: 'One photo in, one finished clip out',
-      body: 'No editing timeline, no green screen. Upload a clear photo, choose a length and the render keeps every beat of the original routine.',
-      photoLabel: 'Uploaded photo',
-      resultLabel: 'Generated clip',
+      eyebrow: 'A look at the format',
+      title: 'Your photos. A shared punchline.',
+      body: 'The reference sets the timing; your photos define the cast. These illustrated assets are placeholders, not verified generated results.',
+      photoLabel: 'Illustrated input',
+      resultLabel: 'Illustrated concept',
     },
-    problem: {
-      eyebrow: 'The catch',
-      title: `Joining the ${k} trend is harder than it looks`,
-      items: [
-        { title: 'You have to learn the routine', body: 'Getting every move right takes real practice, and nerves still show once the camera is rolling.' },
-        { title: 'Someone has to film it', body: 'You need a friend or a tripod, plus a background that matches the framing of the original.' },
-        { title: 'The timing is unforgiving', body: 'Half a beat late looks obvious next to the original, so it turns into take after take.' },
-      ],
-    } as ProblemBlock | null,
-    withWithout: {
-      eyebrow: 'Side by side',
-      title: `Filming it yourself vs. using ${b}`,
-      without: 'Filming it yourself',
-      with: `With ${b}`,
-      rows: [
-        { without: 'Learn the choreography first', with: 'No dancing needed, one photo is enough' },
-        { without: 'Find a friend or set up a tripod', with: 'No camera setup' },
-        { without: 'Retake until the timing lines up', with: 'Timing follows the original clip' },
-        { without: 'Edit and export on your phone', with: 'Download a finished MP4' },
-      ],
-    } as WithWithoutBlock | null,
+    problem: null as ProblemBlock | null,
+    withWithout: null as WithWithoutBlock | null,
     // 首页关键词区块（one-page SEO）：H2 带关键词，上新词时按趋势本身重写 whatIs
     howTo: {
-      eyebrow: 'How it works',
-      title: `How to make a ${k} AI video in 3 steps`,
+      eyebrow: 'Make it yours',
+      title: `How to make a ${k} AI video`,
       steps: [
-        { title: 'Upload one clear photo', body: 'One person, facing the camera, in even light. JPG, PNG or WebP up to 10 MB.' },
-        { title: 'Choose a length', body: 'Take a short hook or the full routine. One credit covers one second of video.' },
-        { title: 'Generate and download', body: 'The render finishes in a few minutes. Download the MP4 without a watermark and post it anywhere.' },
+        { title: 'Choose your cast', body: 'Add one clear photo per person for a duo, or use one photo to play both twins. Keep each face visible.' },
+        { title: 'Pick the full routine', body: 'Choose 8 seconds for the point, hops, squish and swap. The 4- and 6-second cuts are shorter opening segments.' },
+        { title: 'Generate, then share', body: 'Confirm permission and the credit cost. Download the silent MP4, then add your chosen sound in your editing or social app.' },
       ],
-      cta: 'Start with your photo',
-      guide: 'Read the step-by-step guide',
+      cta: 'Choose your photos',
+      guide: 'Read the photo and timing guide',
     },
     whatIs: {
-      eyebrow: 'About the trend',
-      title: `What is ${k}?`,
+      eyebrow: 'Know the moves',
+      title: `What is the ${k} dance?`,
       paragraphs: [
-        `${k} is a short vertical clip that people re-create with their own face and style. The routine is quick, the beat is easy to recognise and the camera stays on a single performer, so every new version instantly reads as part of the trend.`,
-        `${b} is an AI dance video generator built around that one clip. Instead of learning the steps and filming, you upload a single photo and the model renders you performing the original routine with the same timing and framing.`,
+        `The ${k} trend, also searched as the gabi trend, is a two-person camera trick. One person points from close to the lens while the other hops in the background. A flat palm appears to squash the distant person as they crouch. A hard cut swaps the roles.`,
+        `${b} is a focused ${k} AI video generator for that routine. Choose two photos for friends, or one for twins. The ${k} AI dance uses a motion reference to guide the composition and timing; face consistency and motion can vary, so review your ${k} video before sharing.`,
       ],
-      guide: `Read the full ${k} trend guide`,
+      guide: `Understand the ${k} trend`,
     },
     features: {
-      eyebrow: 'Features',
-      title: `Everything you need for a ${k} clip`,
+      eyebrow: 'Built for this dance',
+      title: `Your ${k} clip, from start to swap`,
       items: [
-        { title: 'One photo is enough', body: 'A single clear selfie is all the model needs to rebuild you inside the routine.' },
-        { title: 'Faithful motion', body: 'Every step, pause and camera move follows the reference clip frame by frame.' },
-        { title: 'Vertical and ready to post', body: `Exports in ${s.template.aspectRatio} so it drops straight into Reels, Shorts or ${s.trendPlatform}.` },
-        { title: 'Pick your length', body: 'Grab a short hook or the full routine. You only pay for the seconds you render.' },
-        { title: 'Private by default', body: `Uploads are stored privately, used only for your render and ${photoRetention}.` },
-        {
-          title: 'Fair billing',
-          body: subs
-            ? 'Credit packs never expire and plans can be canceled anytime. If a render fails, the credits go straight back to your balance.'
-            : 'Credits never expire. If a render fails, the credits go straight back to your balance.',
-        },
+        { title: 'Two ways to join', body: 'Cast yourself and a friend with two photos, or use one photo for a twin version.' },
+        { title: 'Roles that make sense', body: 'Person A points first; person B hops first. The reference guides the exchange in the full routine.' },
+        { title: 'Vertical format', body: `Create a ${s.template.aspectRatio} MP4 for ${s.trendPlatform}, Reels or Shorts.` },
+        { title: 'Choose the cut', body: 'The full 8-second version includes both halves. Shorter versions cover the opening sequence.' },
+        { title: 'Private photos', body: `Uploads are private and ${photoRetention}.` },
+        { title: 'Failed render protection', body: 'If a generation fails, its credits return automatically to your balance.' },
       ],
     },
     ideas: {
-      eyebrow: 'Ideas',
-      title: 'What people make with it',
+      eyebrow: 'Pick your pairing',
+      title: 'Who gets squished first?',
       items: [
-        { title: 'Surprise the group chat', body: 'Drop yourself into the routine and send it before anyone else jumps on the trend.' },
-        { title: 'Birthday shout-outs', body: 'Use a friend’s photo (with their OK) and turn it into a dance-floor greeting card.' },
-        { title: 'Creator content in minutes', body: 'Ride the trend on your channel without filming, lighting or learning the steps.' },
+        { title: 'You and your bestie', body: 'Give each friend a turn in front of the camera. One photo per person keeps the roles clear.' },
+        { title: 'Meet your twin', body: 'Use one photo to cast yourself in both roles. Same face, two sides of the joke.' },
+        { title: 'Sibling rivalry', body: 'Turn the swap into a playful group-chat moment with an adult sibling who agrees to join.' },
       ],
-      cta: 'Try it with your photo',
+      cta: 'Choose your cast',
     },
     pricing: {
       eyebrow: 'Pricing',
@@ -235,22 +217,15 @@ export function en(s: S) {
       cta: 'Contact support',
       items: [
         {
-          q: `What is ${b}?`,
-          a: `${b} is an online tool that recreates the ${k} video with you as the performer, using just one photo.`,
-          guide: { article: 'trend', label: `Where the ${k} clip came from` },
+          q: `What does ${b} make?`,
+          a: `A photo-based version of the ${k} dance: pointing, three hops, a forced-perspective squish and a role swap in the full cut.`,
+          guide: { article: 'trend', label: 'The squish-and-swap routine explained' },
         },
-        {
-          q: 'Which photo works best?',
-          a: 'A recent photo of one person facing the camera, with even light and the head and shoulders in frame. Group shots, sunglasses and strong filters lower the quality.',
-          guide: { article: 'howTo', label: `Photo tips for a better ${k} AI video` },
-        },
-        { q: 'How long does a render take?', a: 'Most videos finish in 2–8 minutes depending on length and queue. You can close the page; finished videos wait in My videos.' },
-        {
-          q: 'How do credits work?',
-          a: subs
-            ? 'Each second of video costs one credit. Credits from packs never expire; subscription credits are added every month and expire at the end of that month. Renders use the credits that expire soonest first, and credits are refunded automatically if a render fails.'
-            : 'Each second of video costs one credit. Credits are bought in packs, never expire and are refunded automatically if a render fails.',
-        },
+        { q: 'Do I need one photo or two?', a: 'Use two separate, clear photos for a duo. Use one photo in twin mode. Each upload should show one adult with their face unobstructed.' },
+        { q: 'Does the video include the trend song?', a: 'Output is silent. Add the sound you want in TikTok or your editor after downloading.' },
+        { q: 'Will it match the reference exactly?', a: 'No exact match is guaranteed. Facial details, clothing, hand alignment and timing can vary. The current display clips are illustrated placeholders; real outputs still need validation.' },
+        { q: 'How long does a render take?', a: 'Timing depends on the provider queue. Check progress in My videos; you can leave the page while it runs.' },
+        { q: 'How do credits work?', a: subs ? 'One credit covers one second. Purchased pack credits do not expire; subscription credits expire at the end of their period. Failed renders return their credits automatically.' : 'One credit covers one second. Purchased credits do not expire. Failed renders return their credits automatically.' },
         ...(subs
           ? [{ q: 'How do I cancel my subscription?', a: 'Open My account → Billing and choose Cancel renewal. You won’t be charged again, and your plan and credits stay available until the end of the current period.' }]
           : []),
@@ -259,8 +234,8 @@ export function en(s: S) {
       ] as FaqItem[],
     },
     finalCta: {
-      title: `Your ${k} moment is one photo away`,
-      body: 'Upload a selfie, pick a length and watch yourself take the lead.',
+      title: `Make your ${k} moment`,
+      body: 'Two friends. Or two of you. Choose your cast and start with a photo.',
       cta: 'Create my video',
     },
     footer: {
@@ -468,9 +443,9 @@ export function en(s: S) {
     share: {
       title: `An AI video made with ${b}`,
       goneTitle: `Video unavailable – ${b}`,
-      description: `Watch this AI-generated ${k} video, then turn one photo into your own.`,
+      description: `Watch this AI-generated ${k} video, then turn your photos into your own.`,
       heading: `Made with ${b}`,
-      body: `This ${k} video was generated by AI from a single photo. Upload yours to make your own.`,
+      body: `This ${k} video was generated by AI from your photos. Upload yours to make your own.`,
       disclosure: 'This video is AI-generated and does not show real events.',
       cta: 'Make your own',
       reportPrompt: 'Shows you without consent or breaks our rules?',
@@ -499,10 +474,12 @@ export function en(s: S) {
       title: `${k} guides`,
       metaTitle: `${k} AI Video Guides – ${b}`,
       description: `Guides to the ${k} trend and to making your own ${k} AI video: where it came from, which photos work best and step-by-step tips.`,
-      intro: `Background on the ${k} trend and practical tips for turning one photo into a ${k} AI video.`,
+      intro: `Background on the ${k} trend and practical tips for turning your photos into a ${k} AI video.`,
       related: 'Related guides',
     },
     errors: {
+      second_photo_required: 'Add a photo for person B, or choose twin mode.',
+      duo_not_supported: 'The selected video provider does not support two-person generation.',
       unauthorized: 'Please sign in first.',
       insufficient_credits: 'Not enough credits for this length.',
       invalid_code: 'This code is invalid or has expired.',
@@ -551,7 +528,7 @@ export function en(s: S) {
       account_conflict: `This email is linked to a different Google account. Sign in with that account, or email ${s.supportEmail} for help.`,
     } as Record<string, string>,
     legal: {
-      updated: '2026-10-21',
+      updated: '2026-11-01',
       privacy: {
         title: 'Privacy Policy',
         sections: [
@@ -635,24 +612,25 @@ export function en(s: S) {
     },
     articles: {
       trend: {
-        title: `What is the ${k} trend?`,
-        description: `Where the ${k} clip came from, why it spread and how to join in with an AI version of yourself.`,
-        intro: `The ${k} clip is a short vertical dance video that turned into a template: people re-create the same routine, beat for beat, and post their own version.`,
+        title: `${k} dance: hops, squish and swap`,
+        description: `Understand the ${k} duo dance, the forced-perspective squish and the role swap before making your AI version.`,
+        intro: `The joke in ${k} is the relationship between two people: someone near the lens appears to press down on someone far behind.`,
         sections: [
-          { h: 'Why it caught on', p: ['The routine is short, the timing is easy to recognise and the camera work is simple enough that the performer is always the focus. That makes every new version feel like a fresh take on the same joke.'] },
-          { h: 'How people join in', p: ['Some learn the steps and film themselves. Others use AI to place themselves in the original clip, which keeps the exact timing and camera moves without filming anything.'] },
-          { h: 'Do it with AI', p: [`With ${b} you upload one photo and receive a vertical video in which you perform the routine. Choose a short hook or the full length and share it straight away.`] },
+          { h: 'The camera trick', p: ['A fixed camera makes the near hand look larger than the person behind it. The distant performer hops, then lowers into a crouch as the near hand presses down. The performers do not need to touch.'] },
+          { h: 'Why the swap matters', p: ['The hard cut is the punchline. The person who was squished is now in front and gets a turn. Choose the full 8-second version if you want both halves; shorter versions only show the opening.'] },
+          { h: 'Friends or twins', p: ['Two separate photos provide two identities. Twin mode uses one identity twice. Pets and group-photo inputs are not supported in this first version.'] },
+          { h: 'What AI can change', p: ['The model uses a reference video for motion and photos for appearance. It can still change facial details or mistime a hand, so inspect the downloaded video before posting. Current demo assets illustrate the format and are not evidence of generated quality.'] },
         ],
       },
       howTo: {
         title: `How to make a ${k} AI video`,
-        description: `A step-by-step guide to making your own ${k} video from a single photo.`,
-        intro: `You can create your own ${k} video in about five minutes. Here is the full process and a few tips for the best result.`,
+        description: `Choose photos, assign the two roles and make a ${k} AI dance clip. Includes tips for timing, twin mode and adding sound.`,
+        intro: `Start with the cast. ${b} supports two friends from two photos, or a twin version from your photos.`,
         sections: [
-          { h: '1. Pick the right photo', p: ['Choose a recent, sharp photo of one person looking at the camera. Even daylight works best. Avoid sunglasses, hats that cover the face and beauty filters.'] },
-          { h: '2. Upload and choose a length', p: ['Sign in, drop the photo into the generator and pick a length. Shorter clips render faster and cost fewer credits; the full version follows the complete routine.'] },
-          { h: '3. Confirm consent and generate', p: ['Tick the consent box to confirm the photo is yours or that you have permission, then start the render. You can leave the page while it works.'] },
-          { h: '4. Download and share', p: ['When the video is ready, download the MP4 from the generator or from My videos and post it wherever you like.'] },
+          { h: '1. Choose clear individual photos', p: ['Use one adult per photo, looking toward the camera in even light. Avoid sunglasses, covered faces, extreme angles and heavy filters. Get permission from everyone pictured.'] },
+          { h: '2. Assign the roles', p: ['In duo mode, person A points first and person B hops first. In twin mode, one photo supplies both roles. The full routine swaps positions after the midpoint cut.'] },
+          { h: '3. Choose a cut and generate', p: ['The full cut is 8 seconds. The 4- and 6-second cuts cover shorter opening segments. Review the credits shown, confirm consent and submit once. Follow the job in My videos.'] },
+          { h: '4. Review and add sound', p: ['Check faces, clothing, hand alignment and the cut. Download the silent MP4 and add your chosen sound in your editing or social app. Label the result as AI-generated.'] },
         ],
       },
     } satisfies Record<ArticleKey, ArticleContent>,

@@ -12,6 +12,7 @@ export interface VideoBalance {
 
 export type BalanceQuery =
   | { status: 'mock' }
+  | { status: 'unsupported' }
   | { status: 'no_key'; keyName: string }
   | { status: 'unauthorized'; keyName: string }
   // 只有 fal：Key 有效但权限范围不含 billing:usage:read
@@ -28,6 +29,8 @@ function readBalance(provider: string, amount: unknown, currency: unknown): Bala
 export async function queryVideoBalance(env: Env): Promise<BalanceQuery> {
   const id = activeVideoProviderId(env)
   if (id === 'mock') return { status: 'mock' }
+  // KIE 返回的是积分，不能按 USD 阈值直接比较；先在供应商后台查余额。
+  if (id === 'kie') return cleanSecret(env.KIE_API_KEY) ? { status: 'unsupported' } : { status: 'no_key', keyName: 'KIE_API_KEY' }
   if (id === 'fal') {
     const key = cleanSecret(env.FAL_KEY)
     if (!key) return { status: 'no_key', keyName: 'FAL_KEY' }

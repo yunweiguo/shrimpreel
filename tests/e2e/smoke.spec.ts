@@ -33,6 +33,7 @@ test('新用户：登录 → 购买 → 生成 → 个人中心看到视频与�
   await page.goto('/')
   // 按钮出现 = 已水合且会话加载完；之前的输入事件 React 接收不到
   await expect(page.getByTestId('generate')).toBeVisible()
+  if (site.duoEnabled) await page.getByTestId('mode-twins').click()
   await page.getByTestId('photo-input').setInputFiles(PHOTO)
   await page.getByTestId('duration-short').click()
   await page.getByTestId('consent').check()

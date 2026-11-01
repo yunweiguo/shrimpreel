@@ -176,6 +176,7 @@ function balanceOutcome(amount: number, currency: string, provider: string) {
 
 async function probeVideo(env: Env): Promise<Outcome> {
   const result = await queryVideoBalance(env)
+  if (result.status === 'unsupported') return warn('已配置 KIE 密钥；尚未校验连通性，余额请在 KIE 后台查看')
   if (result.status === 'mock') return ok('mock 视频服务商，不调用外部接口')
   if (result.status === 'no_key') return fail(`${result.keyName} 未配置`)
   if (result.status === 'unauthorized') return fail(`${result.keyName} 无效`)

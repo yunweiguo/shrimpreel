@@ -21,10 +21,10 @@ export function Generator({ styleId: controlledStyleId, onStyleChange }: { style
   const locale = useLocale()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const { user, config, loading, refresh } = useSession()
-  const inputRef = useRef<HTMLInputElement>(null)
   const [photo, setPhoto] = useState<Photo | null>(null)
+  const [secondPhoto, setSecondPhoto] = useState<Photo | null>(null)
+  const [mode, setMode] = useState<'duo' | 'twins'>(site.duoEnabled ? 'duo' : 'twins')
   const [uploading, setUploading] = useState(false)
-  const [dragging, setDragging] = useState(false)
   const [ownStyleId, setOwnStyleId] = useState<string>(defaultStyle.id)
   const styleId = controlledStyleId ?? ownStyleId
   const selectStyle = onStyleChange ?? setOwnStyleId
@@ -42,7 +42,10 @@ export function Generator({ styleId: controlledStyleId, onStyleChange }: { style
 
   useEffect(() => () => {
     if (photo) URL.revokeObjectURL(photo.previewUrl)
-  }, [photo])
+  }, [photo?.previewUrl])
+  useEffect(() => () => {
+    if (secondPhoto) URL.revokeObjectURL(secondPhoto.previewUrl)
+  }, [secondPhoto?.previewUrl])
 
   // 轮询当前任务直到结束；结束后刷新余额（失败时积分已退回）
   useEffect(() => {
@@ -72,31 +75,37 @@ export function Generator({ styleId: controlledStyleId, onStyleChange }: { style
     }
   }
 
-  async function selectFile(file: File | undefined) {
-    if (!file) return
+  async function selectFile(file: File | undefined, slot = 0) {
+    if (!file || busy) return
+    const setSelected = slot === 0 ? setPhoto : setSecondPhoto
     setError(null)
     if (!(site.upload.contentTypes as readonly string[]).includes(file.type)) return setError('unsupported_file_type')
     if (file.size > site.upload.maxBytes) return setError('file_too_large')
+    setConsent(false)
     const next: Photo = { file, previewUrl: URL.createObjectURL(file), uploadId: null }
-    setPhoto(next)
+    setSelected(next)
     setGeneration(null)
     if (!user) return
     try {
       const uploadId = await upload(file)
-      setPhoto((current) => (current?.file === file ? { ...current, uploadId } : current))
+      setSelected((current) => (current?.file === file ? { ...current, uploadId } : current))
     } catch (err) {
       setError(errorCode(err))
     }
   }
 
   async function generate() {
+    if (busy || !consent) return
     if (!photo) return setError('invalid_upload')
+    if (mode === 'duo' && !secondPhoto) return setError('second_photo_required')
     setError(null)
     setSubmitting(true)
     try {
       const uploadId = photo.uploadId ?? (await upload(photo.file))
       if (!photo.uploadId) setPhoto({ ...photo, uploadId })
-      const data = await api<{ generation: Generation }>('/api/generations', { json: { uploadId, durationId, styleId, locale } })
+      const secondaryUploadId = mode === 'duo' && secondPhoto ? secondPhoto.uploadId ?? (await upload(secondPhoto.file)) : undefined
+      if (secondaryUploadId && secondPhoto && !secondPhoto.uploadId) setSecondPhoto({ ...secondPhoto, uploadId: secondaryUploadId })
+      const data = await api<{ generation: Generation }>('/api/generations', { json: { uploadId, secondaryUploadId, mode, durationId, styleId, locale } })
       track('generate_video', { style_id: styleId, duration_id: durationId, credits: data.generation.creditsCost })
       setGeneration(data.generation)
       await refresh()
@@ -128,59 +137,24 @@ export function Generator({ styleId: controlledStyleId, onStyleChange }: { style
       {/* 1. 照片 */}
       <section className="space-y-3">
         <StepTitle n={1}>{g.stepPhoto}</StepTitle>
-        {/* 键盘与读屏从下面的按钮进入，隐藏的 input 不占 Tab 位 */}
-        <input
-          ref={inputRef}
-          type="file"
-          accept={site.upload.contentTypes.join(',')}
-          className="sr-only"
-          tabIndex={-1}
-          aria-label={g.dropTitle}
-          data-testid="photo-input"
-          onChange={(event) => {
-            void selectFile(event.target.files?.[0])
-            event.target.value = ''
-          }}
-        />
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(event) => {
-            event.preventDefault()
-            setDragging(true)
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(event) => {
-            event.preventDefault()
-            setDragging(false)
-            void selectFile(event.dataTransfer.files?.[0])
-          }}
-          className={`flex w-full items-center justify-center rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
-            dragging ? 'border-accent bg-accent/5' : 'border-line hover:border-fg/40'
-          }`}
-        >
-          {photo ? (
-            <span className="flex items-center gap-4 text-left">
-              <img src={photo.previewUrl} alt="" className="size-20 rounded-lg object-cover" />
-              <span className="space-y-1">
-                <span className="flex items-center gap-1.5 text-sm font-semibold">
-                  {uploading ? <Spinner /> : <CircleCheck className="size-4 text-emerald-600" />}
-                  {uploading ? g.uploading : g.uploaded}
-                </span>
-                <span className="block text-xs text-muted underline">{g.change}</span>
-              </span>
-            </span>
-          ) : (
-            <span className="flex flex-col items-center gap-2.5">
-              <span className="grid size-11 place-items-center rounded-full bg-ink text-ink-fg">
-                <Upload className="size-5" />
-              </span>
-              <span className="text-sm font-semibold">{g.dropTitle}</span>
-              <span className="text-xs text-muted">{g.dropHint}</span>
-            </span>
-          )}
-        </button>
+        {site.duoEnabled ? (
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={g.modeLabel}>
+            {(['duo', 'twins'] as const).map((value) => (
+              <button key={value} type="button" role="radio" aria-checked={mode === value} disabled={busy}
+                data-testid={`mode-${value}`} onClick={() => {setMode(value); setConsent(false); setError(null)}}
+                className={`rounded-xl border px-3 py-3 text-left text-sm ${mode === value ? 'border-ink bg-ink text-ink-fg' : 'border-line'}`}>
+                <span className="block font-semibold">{g.modes[value]}</span>
+                <span className="mt-1 block text-xs opacity-75">{g.modeHints[value]}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div className={mode === 'duo' ? 'grid gap-3 sm:grid-cols-2' : ''}>
+          <PhotoSlot photo={photo} label={mode === 'duo' ? g.personA : g.stepPhoto} testId="photo-input"
+            busy={busy} uploading={uploading} onSelect={(file) => void selectFile(file)} />
+          {mode === 'duo' ? <PhotoSlot photo={secondPhoto} label={g.personB} testId="photo-input-second"
+            busy={busy} uploading={uploading} onSelect={(file) => void selectFile(file, 1)} /> : null}
+        </div>
         <p className="text-xs leading-5 text-muted">{g.guidance}</p>
       </section>
 
@@ -299,7 +273,7 @@ export function Generator({ styleId: controlledStyleId, onStyleChange }: { style
           <button
             type="button"
             className="btn-primary w-full py-3.5"
-            disabled={busy || !photo || !consent}
+            disabled={busy || !photo || (mode === 'duo' && !secondPhoto) || !consent}
             onClick={generate}
             data-testid="generate"
           >
@@ -322,6 +296,33 @@ export function Generator({ styleId: controlledStyleId, onStyleChange }: { style
   )
 }
 
+// 两个角色复用同一个上传控件，格式、忙碌状态和无障碍标签保持一致。
+function PhotoSlot({photo,label,testId,busy,uploading,onSelect}:{photo:Photo|null;label:string;testId:string;busy:boolean;uploading:boolean;onSelect:(file:File|undefined)=>void}) {
+  const g=useContent().generator
+  const inputRef=useRef<HTMLInputElement>(null)
+  const [dragging,setDragging]=useState(false)
+  return <div className="space-y-2">
+    <p className="text-xs font-semibold">{label}</p>
+    <input ref={inputRef} type="file" accept={site.upload.contentTypes.join(',')} className="sr-only" tabIndex={-1}
+      aria-label={label} data-testid={testId} disabled={busy}
+      onChange={(event)=>{onSelect(event.target.files?.[0]);event.target.value=''}} />
+    <button type="button" disabled={busy} aria-label={`${label}: ${photo ? g.change : g.dropTitle}`}
+      onClick={()=>inputRef.current?.click()}
+      onDragOver={(e)=>{e.preventDefault();if(!busy)setDragging(true)}} onDragLeave={()=>setDragging(false)}
+      onDrop={(e)=>{e.preventDefault();setDragging(false);if(!busy)onSelect(e.dataTransfer.files?.[0])}}
+      className={`flex min-h-40 w-full items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition ${dragging?'border-accent bg-accent/5':'border-line hover:border-fg/40'}`}>
+      {photo ? <span className="flex flex-col items-center gap-2">
+        <img src={photo.previewUrl} alt="" className="h-28 w-24 rounded-lg object-cover" />
+        <span className="flex items-center gap-1 text-xs">{uploading?<Spinner />:<CircleCheck className="size-4" />}{uploading?g.uploading:g.uploaded}</span>
+        <span className="text-xs text-muted underline">{g.change}</span>
+      </span> : <span className="flex flex-col items-center gap-2">
+        <span className="grid size-10 place-items-center rounded-full bg-ink text-ink-fg"><Upload className="size-5" /></span>
+        <span className="text-sm font-semibold">{g.dropTitle}</span><span className="text-xs text-muted">{g.dropHint}</span>
+      </span>}
+    </button>
+  </div>
+}
+
 function StepTitle({ n, children }: { n: number; children: string }) {
   return (
     <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -339,7 +340,7 @@ function GenerationResult({ generation, onReset }: { generation: Generation; onR
       {isActiveGeneration(generation) ? (
         <p className="flex items-start gap-2 text-sm">
           <Spinner className="mt-0.5 size-4 shrink-0" />
-          {generation.status === 'queued' ? g.queued : g.processing}
+          {generation.pendingConfirmation ? g.pendingConfirmation : generation.status === 'queued' ? g.queued : g.processing}
         </p>
       ) : generation.status === 'succeeded' && generation.videoUrl ? (
         <>

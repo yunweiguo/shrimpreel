@@ -21,8 +21,9 @@ export async function storeOutputFromUrl(
   url: string,
   key: string,
   limits = { streamed: MAX_OUTPUT_BYTES, buffered: MAX_BUFFERED_OUTPUT_BYTES },
+  redirect: RequestRedirect = 'follow',
 ) {
-  const response = await fetch(url)
+  const response = await fetch(url, { redirect })
   if (!response.ok) throw new Error(`download output failed: HTTP ${response.status}`)
   const httpMetadata = { contentType: 'video/mp4' }
   const header = response.headers.get('content-length')
@@ -59,7 +60,7 @@ export async function storeOutputFromUrl(
   await env.MEDIA.put(key, bytes, { httpMetadata })
   return true
 }
-const POLL_DELAY_SECONDS: Record<string, number> = { mock: 2, fal: 20, yir: 20, nanoapi: 30 }
+const POLL_DELAY_SECONDS: Record<string, number> = { mock: 2, fal: 20, yir: 20, nanoapi: 30, kie: 20 }
 
 export async function enqueueJob(env: Env, message: VideoJobMessage, delaySeconds = 0) {
   await env.VIDEO_QUEUE.send(message, delaySeconds > 0 ? { delaySeconds } : undefined)
@@ -119,7 +120,11 @@ async function submitGeneration(env: Env, generation: GenerationRow) {
   const style = findStyle(generation.template_id)
   const sourceFile = duration ? style?.sources[duration.id] : undefined
   const upload = await env.DB.prepare('SELECT * FROM uploads WHERE id = ?').bind(generation.upload_id).first<UploadRow>()
-  if (!duration || !style || !sourceFile || !upload || upload.expired_at) {
+  const secondary = generation.secondary_upload_id
+    ? await env.DB.prepare('SELECT * FROM uploads WHERE id = ?').bind(generation.secondary_upload_id).first<UploadRow>()
+    : null
+  if (!duration || !style || !sourceFile || !upload || upload.expired_at || upload.user_id !== generation.user_id
+      || (generation.secondary_upload_id && (!secondary || secondary.expired_at || secondary.user_id !== generation.user_id))) {
     await failGeneration(env, generation.id, 'invalid_input', 'Upload, style or duration no longer exists')
     return
   }
@@ -138,6 +143,7 @@ async function submitGeneration(env: Env, generation: GenerationRow) {
       style,
       durationSeconds: generation.duration_seconds,
       imageUrl: await signedUploadUrl(env, upload.id, Date.parse(generation.created_at)),
+      secondaryImageUrl: secondary ? await signedUploadUrl(env, secondary.id, Date.parse(generation.created_at)) : undefined,
       sourceVideoUrl: templateSourceUrl(env, sourceFile),
       sourceVideoKey: `templates/${sourceFile}`,
       webhookUrl: webhookUrl.toString(),
@@ -205,7 +211,7 @@ async function pollGeneration(env: Env, generation: GenerationRow) {
 
   const outputKey = `outputs/${generation.user_id}/${generation.id}.mp4`
   if ('url' in status.output) {
-    if (!(await storeOutputFromUrl(env, status.output.url, outputKey))) {
+    if (!(await storeOutputFromUrl(env, status.output.url, outputKey, undefined, provider.id === 'kie' ? 'error' : 'follow'))) {
       await failGeneration(env, generation.id, 'output_too_large', 'Provider output exceeds the size limit')
       return
     }

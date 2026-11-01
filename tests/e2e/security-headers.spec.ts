@@ -75,6 +75,7 @@ test('公开页、登录后生成和后台都没有 CSP 违规与水合错误；
   await buyPackage(page.request, 'starter')
   await page.goto('/')
   await expect(page.getByTestId('generate')).toBeVisible()
+  if (site.duoEnabled) await page.getByTestId('mode-twins').click()
   await page.getByTestId('photo-input').setInputFiles(PHOTO)
   await page.getByTestId('duration-short').click()
   await page.getByTestId('consent').check()

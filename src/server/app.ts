@@ -286,7 +286,11 @@ app.post('/api/generations', async (c) => {
   const settings = await getSettings(c.env)
   assertOpen(settings, user)
   await rateLimit(c.env.GENERATE_LIMITER, user.id)
-  const body = await readJson<{ uploadId: string; durationId: string; styleId?: string; mockOutcome: string; locale: string }>(c)
+  const body = await readJson<{ uploadId: string; secondaryUploadId?: string; mode?: 'duo' | 'twins'; durationId: string; styleId?: string; mockOutcome: string; locale: string }>(c)
+  if (body.mode !== undefined && body.mode !== 'duo' && body.mode !== 'twins') throw new ApiError(400, 'invalid_upload')
+  if (body.mode === 'duo' && !site.duoEnabled) throw new ApiError(400, 'duo_not_supported')
+  if (body.mode === 'duo' && !body.secondaryUploadId) throw new ApiError(400, 'second_photo_required')
+  if (body.mode === 'twins' && body.secondaryUploadId) throw new ApiError(400, 'invalid_upload')
   const duration = findDuration(body.durationId ?? '')
   if (!duration) throw new ApiError(400, 'invalid_duration')
   // 不带 styleId 用默认风格；带了但不存在报错，不悄悄换风格
@@ -298,6 +302,11 @@ app.post('/api/generations', async (c) => {
     .bind(body.uploadId ?? '', user.id)
     .first<UploadRow>()
   if (!upload) throw new ApiError(400, 'invalid_upload')
+  const secondary = body.secondaryUploadId
+    ? await db.prepare('SELECT * FROM uploads WHERE id = ? AND user_id = ? AND expired_at IS NULL')
+        .bind(body.secondaryUploadId, user.id).first<UploadRow>()
+    : null
+  if (body.secondaryUploadId && (!secondary || secondary.id === upload.id)) throw new ApiError(400, 'invalid_upload')
   const active = await db
     .prepare(`SELECT COUNT(*) AS n FROM generations WHERE user_id = ? AND status IN ('queued', 'processing')`)
     .bind(user.id)
@@ -308,6 +317,7 @@ app.post('/api/generations', async (c) => {
   await rememberLocale(c.env, user, body.locale)
 
   const providerId = activeVideoProviderId(c.env)
+  if ((secondary || site.duoEnabled) && providerId !== 'kie' && providerId !== 'mock') throw new ApiError(503, 'duo_not_supported')
   const mockOutcome = providerId === 'mock' && (body.mockOutcome === 'fail' || body.mockOutcome === 'hang') ? body.mockOutcome : null
   const meta = mockOutcome ? JSON.stringify({ mockOutcome }) : null
   const id = createId('gen')
@@ -316,11 +326,11 @@ app.post('/api/generations', async (c) => {
     await db.batch([
       db
         .prepare(
-          `INSERT INTO generations (id, user_id, template_id, duration_id, duration_seconds, credits_cost, upload_id,
+          `INSERT INTO generations (id, user_id, template_id, duration_id, duration_seconds, credits_cost, upload_id, secondary_upload_id,
            status, provider, provider_meta, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?)`,
         )
-        .bind(id, user.id, style.id, duration.id, duration.seconds, duration.credits, upload.id, providerId, meta, now, now),
+        .bind(id, user.id, style.id, duration.id, duration.seconds, duration.credits, upload.id, secondary?.id ?? null, providerId, meta, now, now),
       ...ledgerStatements(db, {
         userId: user.id,
         delta: -duration.credits,
@@ -796,9 +806,9 @@ app.post('/api/webhooks/stripe', async (c) => {
   return c.json({ received: true, ...result })
 })
 
-// 视频服务商完成回调（fal、yir、nanoapi）：只当作“立即轮询”的信号，真实结果由 jobs.ts 用 API key 拉取，
+// 视频服务商完成回调（fal、yir、nanoapi、kie）：只当作“立即轮询”的信号，真实结果由 jobs.ts 用 API key 拉取，
 // 所以只校验地址里的任务 token，不验 yir 的签名头；nanoapi 的回调不带签名，同样只靠地址里的 token
-for (const provider of ['fal', 'yir', 'nanoapi']) {
+for (const provider of ['fal', 'yir', 'nanoapi', 'kie']) {
   app.post(`/api/webhooks/${provider}`, async (c) => {
     const generationId = c.req.query('gen') ?? ''
     const token = c.req.query('token') ?? ''

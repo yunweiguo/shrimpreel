@@ -26,7 +26,7 @@
 | `DODO_PRODUCTS` | 同上 | 用 Dodo 时 | `scripts/dodo-setup.mjs` 可以生成 |
 | `STRIPE_ENVIRONMENT` | `test`、`live` | 用 Stripe 时 | webhook 里的 `livemode` 和它不一致时拒收；上线检查核对 `STRIPE_SECRET_KEY` 的前缀（`sk_test_` / `sk_live_`） |
 | `STRIPE_PRODUCTS` | JSON，值是 Price ID，如 `{"starter":"price_xxx"}` | 用 Stripe 时 | 积分包用一次性价格，订阅套餐用 recurring 价格。`scripts/stripe-setup.mjs` 可以生成 |
-| `VIDEO_PROVIDER` | `fal`、`yir`、`nanoapi`、`mock` | 是 | 模型和单价在 `site.video` 里配置，yir 的配置在 `site.video.yir`，NanoAPI 的在 `site.video.nanoapi` |
+| `VIDEO_PROVIDER` | `fal`、`yir`、`nanoapi`、`kie`、`mock` | 是 | 模型和单价在 `site.video` 里配置，yir 的配置在 `site.video.yir`，NanoAPI 的在 `site.video.nanoapi` |
 | `MODERATION_PROVIDER` | `openai`、`none`、`mock` | 是 | 上传图片的审核方式。`none` 不审核，检查时给出警告 |
 | `GOOGLE_CLIENT_ID` | OAuth Client ID | 是 | 站点只有 Google 登录，留空就没人能登录 |
 | `UMAMI_ORIGIN` | 不带路径的 https 地址，如 `https://umami.example.com` | 否 | Umami 实例地址，留空则不代理。只在 Worker 端使用（`/s/script.js`、`/s/api/send` 同域代理），不进前端，页面源码里看不到实例域名；格式不对时检查给出警告。实例要带 GeoLite2 数据库（Vercel 上部署时设 `BUILD_GEO=1` 再重新部署）：代理把访客 IP 放进 `payload.ip`，Umami 据此查国家，没有数据库会返回 500。只有 `APP_ENV=production` 才转发上报和取脚本（其它环境 `/s/script.js` 返回空 JS），`/admin` 页面不转发 |
@@ -82,3 +82,17 @@
 3. 运行 `npm run cf:types`，重新生成 `worker-configuration.d.ts`。没写进 `.dev.vars` 的可选 secret，在 `src/env.d.ts` 里手动补上类型。
 4. 在 `src/server/config-health.ts` 里加上线检查规则，在 `tests/unit/config-health.test.ts` 里加用例。
 5. 更新本文件。
+
+## Hop Hop Hop 的 KIE 配置
+
+- `VIDEO_PROVIDER=kie` 使用 `bytedance/seedance-2-fast`，密钥 `KIE_API_KEY` 通过 `wrangler secret put KIE_API_KEY` 配置，不能写入代码。已登记在 `.dev.vars.example` 和 `src/env.d.ts`。
+- 双人模式传两张独立、属于同一用户的照片；双胞胎模式只传一张。首尾帧参数不与参考素材混用。输出固定 720p、9:16、无音频。
+- 源视频文件名、时长和积分取自 `site`。完整版 8 秒，4 秒和 6 秒是开头片段。每个源片必须按对应时长剪好。
+- `site.video.kie.costCentsPerSecond` 是参考模式每秒成本（美分）的估算配置。未校准时为 0，数据库记未知成本 NULL，不能当成免费或已验证毛利。按当前供应商费率校准后去掉对应 TODO。
+- 创建接口未公开保证幂等。发送前写入 `kie-unconfirmed:<generationId>`；网络中断、5xx 或任务 ID 丢失不会重发创建请求。前台提示等待核对，管理员可在 KIE 后台核对；未解决时按现有 45 分钟超时流程退款。回调不接受未经验证的成片地址，也不会自动把不确定任务关联到供应商任务。
+- 已确认任务通过鉴权查询 `recordInfo`；只允许 `https://tempfile.aiquickdraw.com` 的成片。不跟随媒体重定向；供应商换域名时需要核实并更新白名单。余额目前仅提示去供应商后台查看，不将供应商积分当美元。
+- 上线前迁移 `0016_duo_uploads.sql`，换真实参考片和展示片，配置正式域名、资源和支付商品，运行 doctor。当前占位片仅供本地 mock 验证，不可作为真实生成效果展示。
+
+接口依据：
+- https://docs.kie.ai/market/bytedance/seedance-2-fast
+- https://docs.kie.ai/market/common/get-task-detail
